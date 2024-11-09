@@ -2,6 +2,8 @@ import socket
 import tkinter as tk
 import threading
 import ips
+global color
+color = False
 message_entry = 0
 chat_display = 0
 name_entry = ""
@@ -58,8 +60,28 @@ def send_message(event=None):
         client_socket.send(full_message.encode('utf-8'))
 
         # Display the sent message in the chat window
-        display_message(f"You: {message}")
+        display_message(f"{username}: {message}")
         message_entry.delete(0, tk.END)
+
+def settings(color):
+    # Create a new top-level window for settings
+    settings_window = tk.Toplevel(root)
+    settings_window.title("Settings")
+    settings_window.geometry("300x200")
+    print(color)
+
+    # Add some widgets to the settings window
+    dark_mode = tk.Button(settings_window,text="Switch mode dark/light", command=lambda: switch_color())
+    dark_mode.pack()
+
+    if color == False:
+        settings_window.configure(background = "#1e1e1e")
+        dark_mode.configure(foreground = "white", background = "#1e1e1e")
+    elif color == True:
+        settings_window.configure(background = "#ffffff")  # White background for the settings window
+        dark_mode.configure(foreground = "black", background = "#ffffff")  # Black text on a white background for the dark mode toggle
+
+    # Example setting option (e.g., a checkbox or entry)
 
 # Create the main window
 ips.first_window()
@@ -97,8 +119,45 @@ message_entry.pack(padx=10, pady=5)
 
 message_entry.bind("<Return>", send_message)
 # Create a button to send the message
-send_button = tk.Button(root, text="Send", command=send_message)
-send_button.pack(pady=5)
+#send_button = tk.Button(root, text="Send", command=send_message)
+#send_button.pack(pady=5)
+
+image = tk.PhotoImage(file="setting.png")  # Replace with your image file path
+
+# Create a button with the image
+button = tk.Button(root, image=image, command=lambda: settings(color))
+
+# Pack the button to the bottom-left corner
+button.pack(side="bottom", anchor="w")
+
+root.configure(background="#1e1e1e")
+welcome.configure(foreground = "white", background = "#1e1e1e")
+name_entry.configure(background="#3e3e42", foreground="white")
+chat_display.configure(background="#252526", foreground="white")
+message_entry.configure(background="#3e3e42", foreground="white")
+button.configure(background="#1e1e1e")
+
+def switch_color():
+    global color
+    color = not color
+
+    if color == False:
+        root.configure(background="#1e1e1e")
+        welcome.configure(foreground = "white", background = "#1e1e1e")
+        name_entry.configure(background="#3e3e42", foreground="white")
+        chat_display.configure(background="#252526", foreground="white")
+        message_entry.configure(background="#3e3e42", foreground="white")
+        button.configure(background="#1e1e1e")
+    elif color == True:
+        root.configure(background="#ffffff")  # White background for the main window
+        welcome.configure(foreground="black", background="#ffffff")  # Black text on a white background
+        name_entry.configure(background="#f0f0f0", foreground="black")  # Light gray background for entry with black text
+        chat_display.configure(background="#f5f5f5", foreground="black")  # Very light gray background with black text for chat display
+        message_entry.configure(background="#f0f0f0", foreground="black")  # Light gray background for message input with black text
+        button.configure(background="#f0f0f0")
+
+        
+        
 
 # Start the client connection and get the socket
 client_socket = start_client()
