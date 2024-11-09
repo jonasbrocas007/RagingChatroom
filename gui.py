@@ -1,6 +1,10 @@
 import socket
 import tkinter as tk
 import threading
+import ips
+message_entry = 0
+chat_display = 0
+name_entry = ""
 
 # Global variable for the client socket
 client_socket = None
@@ -27,7 +31,7 @@ def display_message(msg):
 # Set up the client connection and start the receiving thread
 def start_client():
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_ip = "26.52.151.38"  # Replace with actual server IP
+    server_ip = ips.confirmed_server_ip  # Replace with actual server IP
     client_socket.connect((server_ip, 9999))
 
     # Start a thread to receive messages from the server
@@ -38,7 +42,7 @@ def start_client():
     return client_socket
 
 # Function to send a message along with the username and IP address to the server
-def send_message():
+def send_message(event=None):
     global client_socket
     
     # Get the username and message input from the user
@@ -58,6 +62,8 @@ def send_message():
         message_entry.delete(0, tk.END)
 
 # Create the main window
+ips.first_window()
+
 root = tk.Tk()
 root.title("Raging totally not racist Chatroom")
 
@@ -89,6 +95,7 @@ chat_display.config(yscrollcommand=scrollbar.set)
 message_entry = tk.Entry(root, width=50)
 message_entry.pack(padx=10, pady=5)
 
+message_entry.bind("<Return>", send_message)
 # Create a button to send the message
 send_button = tk.Button(root, text="Send", command=send_message)
 send_button.pack(pady=5)
@@ -98,3 +105,4 @@ client_socket = start_client()
 
 # Start the Tkinter main loop
 root.mainloop()
+
