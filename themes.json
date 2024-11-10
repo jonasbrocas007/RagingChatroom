@@ -1,0 +1,29 @@
+{
+    "themes": {
+        "dark":{
+            "root": {"background": "#1e1e1e"},
+            "button": {"background": "#1e1e1e"},
+            "welcome": {"background": "#1e1e1e", "foreground": "white"},
+            "name_entry": {"background": "#3e3e42", "foreground": "white"},
+            "chat_display": {"background": "#252526", "foreground": "white"},
+            "message_entry": {"background": "#3e3e42", "foreground": "white"},
+
+            "settings_window": {"background": "#1e1e1e"},
+            "dark_mode_settings": {"background": "#1e1e1e", "foreground": "white"}
+    
+        },
+        "light":{
+
+            "root": {"background": "#ffffff"},
+            "welcome": {"foreground": "black", "background": "#ffffff"},
+            "name_entry": {"background": "#f0f0f0", "foreground": "black"},
+            "chat_display": {"background": "#f5f5f5", "foreground": "black"},
+            "message_entry": {"background": "#f0f0f0", "foreground": "black"},
+            "button": {"background": "#f0f0f0"},
+
+            "settings_window": {"background": "#ffffff"}, 
+            "dark_mode_settings": {"background": "#ffffff", "foreground": "black"}  
+
+        }
+    }
+}
