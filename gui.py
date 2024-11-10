@@ -6,6 +6,8 @@ import json
 import pyaudio
 import time
 
+voice_chat_active = False
+
 current_theme = "dark"
 message_entry = 0
 chat_display = 0
@@ -23,42 +25,47 @@ audio = pyaudio.PyAudio()
 with open("themes.json", "r") as style_file:
     styles = json.load(style_file)
 
+
+def toggle_voice_chat():
+    global voice_chat_active
+    voice_chat_active = not voice_chat_active
+
 def capture_audio():
     #audio = pyaudio.PyAudio()
     stream = audio.open(format=FORMAT, rate=SAMPLE_RATE, channels=CHANNELS, frames_per_buffer=BUFFER_SIZE, input=True)
     
     while True:  # Run indefinitely to capture and send audio
-        audio_socket.settimeout(1.0)
-        try:
-            # Read audio data from the microphone
-            data = stream.read(BUFFER_SIZE)
-            # Send the audio data to the server
-            audio_socket.sendall(b"1" + len(data).to_bytes(4, byteorder='big') + data)
-        except socket.timeout:
-            continue
-        except Exception as e:
-            print(f"Error occurred: {e}")
-            break
+        while voice_chat_active == True:
+            audio_socket.settimeout(1.0)
+            try:
+                # Read audio data from the microphone
+                data = stream.read(BUFFER_SIZE)
+                # Send the audio data to the server
+                audio_socket.sendall(b"1" + len(data).to_bytes(4, byteorder='big') + data)
+            except socket.timeout:
+                continue
+            except Exception as e:
+                print(f"Error occurred: {e}")
+                break
 
 # Function to handle receiving audio data from the server
 def receive_audio():
-
-    #audio = pyaudio.PyAudio()
     output_stream = audio.open(format=FORMAT, rate=SAMPLE_RATE, channels=CHANNELS, frames_per_buffer=BUFFER_SIZE, output=True)
     
     while True:
-        audio_socket.settimeout(1.0)
-        try:
+        while voice_chat_active == True:
+            audio_socket.settimeout(1.0)
+            try:
             # Receive audio data from the server
-            audio_data = audio_socket.recv(1024)
-            if audio_data:
-                output_stream.write(audio_data)  # Play the received audio
+                audio_data = audio_socket.recv(1024)
+                if audio_data:
+                    output_stream.write(audio_data)  # Play the received audio
                 
-        except socket.timeout:
-            continue
-        except Exception as e:
-            print(f"Error receiving audio: {e}")
-            break
+            except socket.timeout:
+                continue
+            except Exception as e:
+                print(f"Error receiving audio: {e}")
+                break
 
 # Function to handle receiving messages and updating the chat display
 def receive_messages(client_socket):
@@ -103,7 +110,6 @@ def start_client():
     capture_audio_thread = threading.Thread(target=capture_audio)
     capture_audio_thread.daemon = True
     capture_audio_thread.start()
-
 
     return client_socket
 
@@ -200,12 +206,12 @@ message_entry.bind("<Return>", send_message)
 # Create a button to send the message
 
 image = tk.PhotoImage(file="setting.png")  # Replace with your image file path
-
-# Create a button with the image
 button = tk.Button(root, image=image, command=lambda: settings())
-
-# Pack the button to the bottom-left corner
 button.pack(side="bottom", anchor="w")
+
+mute_image = tk.PhotoImage(file="mute.png")  # Replace with your image file path
+mute_button = tk.Button(root, image=mute_image, command=lambda:toggle_voice_chat())
+mute_button.pack(side="bottom", anchor="w")
 
 aplly_theme("dark")
 
