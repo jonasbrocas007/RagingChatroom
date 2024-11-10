@@ -46,6 +46,9 @@ def broadcast(message, client_socket):
                 client.close()
                 clients.remove(client)
 
+def audio_broadcast(): # working on it
+    pass
+
 # Set up the server
 def start_server():
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

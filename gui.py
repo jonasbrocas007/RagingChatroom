@@ -3,16 +3,42 @@ import tkinter as tk
 import threading
 import ips
 import json
+import pyaudio
+import time
 current_theme = "dark"
 message_entry = 0
 chat_display = 0
 name_entry = ""
+
+FORMAT = pyaudio.paInt16  # Audio format (16-bit PCM)
+SAMPLE_RATE = 44100  # Sampling rate
+CHANNELS = 1         # Mono audio
+BUFFER_SIZE = 1024   # Buffer size for sending/receiving
 
 # Global variable for the client socket
 client_socket = None
 
 with open("themes.json", "r") as style_file:
     styles = json.load(style_file)
+
+def capture_audio():
+    audio = pyaudio.PyAudio()
+    stream = audio.open(format=FORMAT,rate=SAMPLE_RATE, channels=CHANNELS,frames_per_buffer=BUFFER_SIZE, input=True)
+    out_stream = audio.open(format=FORMAT,rate=SAMPLE_RATE, channels=CHANNELS,frames_per_buffer=BUFFER_SIZE, input=False,output=True)
+
+    while True:  # Run indefinitely to capture and play audio
+        try:
+            # Read audio data from the microphone
+            data = stream.read(BUFFER_SIZE)
+
+            client_socket.sendall(b"1" + len(data).to_bytes(4, byteorder='big') + data)
+
+        except Exception as e:
+            print(f"Error occurred: {e}")
+            break
+
+
+
 
 # Function to handle receiving messages and updating the chat display
 def receive_messages(client_socket):
@@ -43,6 +69,10 @@ def start_client():
     receive_thread = threading.Thread(target=receive_messages, args=(client_socket,))
     receive_thread.daemon = True
     receive_thread.start()
+
+    capture_audio_thread = threading.Thread(target=capture_audio)
+    capture_audio_thread.daemon = True
+    capture_audio_thread.start()
 
     return client_socket
 
