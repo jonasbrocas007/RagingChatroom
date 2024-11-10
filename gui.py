@@ -5,6 +5,7 @@ import ips
 import json
 import pyaudio
 import time
+
 current_theme = "dark"
 message_entry = 0
 chat_display = 0
@@ -17,28 +18,47 @@ BUFFER_SIZE = 1024   # Buffer size for sending/receiving
 
 # Global variable for the client socket
 client_socket = None
-
+audio_socket = None
+audio = pyaudio.PyAudio()
 with open("themes.json", "r") as style_file:
     styles = json.load(style_file)
 
 def capture_audio():
-    audio = pyaudio.PyAudio()
-    stream = audio.open(format=FORMAT,rate=SAMPLE_RATE, channels=CHANNELS,frames_per_buffer=BUFFER_SIZE, input=True)
-    out_stream = audio.open(format=FORMAT,rate=SAMPLE_RATE, channels=CHANNELS,frames_per_buffer=BUFFER_SIZE, input=False,output=True)
-
-    while True:  # Run indefinitely to capture and play audio
+    #audio = pyaudio.PyAudio()
+    stream = audio.open(format=FORMAT, rate=SAMPLE_RATE, channels=CHANNELS, frames_per_buffer=BUFFER_SIZE, input=True)
+    
+    while True:  # Run indefinitely to capture and send audio
+        audio_socket.settimeout(1.0)
         try:
             # Read audio data from the microphone
             data = stream.read(BUFFER_SIZE)
-
-            client_socket.sendall(b"1" + len(data).to_bytes(4, byteorder='big') + data)
-
+            # Send the audio data to the server
+            audio_socket.sendall(b"1" + len(data).to_bytes(4, byteorder='big') + data)
+        except socket.timeout:
+            continue
         except Exception as e:
             print(f"Error occurred: {e}")
             break
 
+# Function to handle receiving audio data from the server
+def receive_audio():
 
-
+    #audio = pyaudio.PyAudio()
+    output_stream = audio.open(format=FORMAT, rate=SAMPLE_RATE, channels=CHANNELS, frames_per_buffer=BUFFER_SIZE, output=True)
+    
+    while True:
+        audio_socket.settimeout(1.0)
+        try:
+            # Receive audio data from the server
+            audio_data = audio_socket.recv(1024)
+            if audio_data:
+                output_stream.write(audio_data)  # Play the received audio
+                
+        except socket.timeout:
+            continue
+        except Exception as e:
+            print(f"Error receiving audio: {e}")
+            break
 
 # Function to handle receiving messages and updating the chat display
 def receive_messages(client_socket):
@@ -61,18 +81,29 @@ def display_message(msg):
 
 # Set up the client connection and start the receiving thread
 def start_client():
+    global client_socket, audio_socket
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_ip = ips.confirmed_server_ip  # Replace with actual server IP
     client_socket.connect((server_ip, 9999))
+
+    audio_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    audio_socket.connect((server_ip, 10000))
 
     # Start a thread to receive messages from the server
     receive_thread = threading.Thread(target=receive_messages, args=(client_socket,))
     receive_thread.daemon = True
     receive_thread.start()
 
+    # Start a thread to receive and play audio from the server
+    audio_thread = threading.Thread(target=receive_audio)
+    audio_thread.daemon = True
+    audio_thread.start()
+
+    # Start a thread to capture and send audio to the server
     capture_audio_thread = threading.Thread(target=capture_audio)
     capture_audio_thread.daemon = True
     capture_audio_thread.start()
+
 
     return client_socket
 
@@ -105,7 +136,7 @@ def settings():
     settings_window.geometry("300x200")
 
     # Add some widgets to the settings window
-    dark_mode = tk.Button(settings_window,text="Switch mode dark/light", command=lambda: switch_color())
+    dark_mode = tk.Button(settings_window, text="Switch mode dark/light", command=lambda: switch_color())
     dark_mode.pack()
     apply_settings_theme(current_theme)
 
@@ -130,7 +161,7 @@ def apply_settings_theme(theme_name):
     settings_window.configure(**theme_styles["settings_window"])
     dark_mode.configure(**theme_styles["dark_mode_settings"])
     # Apply styles to main window widgets
-    
+
 # Create the main window
 ips.first_window()
 
@@ -138,11 +169,11 @@ root = tk.Tk()
 root.title("Raging totally not racist Chatroom")
 
 # Welcome label
-welcome = tk.Label(root, text="Welcome to the Raging totally not racist Chatroom", font = ("Comic-Sans", 16))
+welcome = tk.Label(root, text="Welcome to the Raging totally not racist Chatroom", font=("Comic-Sans", 16))
 welcome.pack()
 
 # Name entry field for the user to type their name
-name_entry = tk.Entry(root, width = 25)
+name_entry = tk.Entry(root, width=25)
 name_entry.insert(0, "username")
 name_entry.pack()
 
@@ -187,11 +218,9 @@ def switch_color():
 
     aplly_theme(current_theme)
     apply_settings_theme(current_theme)
-        
 
 # Start the client connection and get the socket
 client_socket = start_client()
 
 # Start the Tkinter main loop
 root.mainloop()
-
