@@ -35,7 +35,7 @@ def capture_audio():
     stream = audio.open(format=FORMAT, rate=SAMPLE_RATE, channels=CHANNELS, frames_per_buffer=BUFFER_SIZE, input=True)
     
     while True:  # Run indefinitely to capture and send audio
-        while voice_chat_active == True:
+        if voice_chat_active == True:
             audio_socket.settimeout(1.0)
             try:
                 # Read audio data from the microphone
@@ -53,7 +53,7 @@ def receive_audio():
     output_stream = audio.open(format=FORMAT, rate=SAMPLE_RATE, channels=CHANNELS, frames_per_buffer=BUFFER_SIZE, output=True)
     
     while True:
-        while voice_chat_active == True:
+        if voice_chat_active == True:
             audio_socket.settimeout(1.0)
             try:
             # Receive audio data from the server
