@@ -41,7 +41,7 @@ def capture_audio():
                 # Read audio data from the microphone
                 data = stream.read(BUFFER_SIZE)
                 # Send the audio data to the server
-                audio_socket.sendall(b"1" + len(data).to_bytes(4, byteorder='big') + data)
+                audio_socket.sendall(data)
             except socket.timeout:
                 continue
             except Exception as e:
