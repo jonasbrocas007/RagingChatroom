@@ -169,53 +169,6 @@ def apply_settings_theme(theme_name):
     dark_mode.configure(**theme_styles["dark_mode_settings"])
     # Apply styles to main window widgets
 
-# Create the main window
-ips.first_window()
-
-root = tk.Tk()
-root.title("Raging totally not racist Chatroom")
-
-# Welcome label
-welcome = tk.Label(root, text="Welcome to the Raging totally not racist Chatroom", font=("Comic-Sans", 16))
-welcome.pack()
-
-# Name entry field for the user to type their name
-name_entry = tk.Entry(root, width=25)
-name_entry.insert(0, "username")
-name_entry.pack()
-
-# Create a frame for the chat display area and the scrollbar
-chat_frame = tk.Frame(root)
-chat_frame.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
-
-# Create a Text widget to display the chat messages
-chat_display = tk.Text(chat_frame, wrap=tk.WORD, height=15, width=50, state=tk.DISABLED)
-chat_display.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-
-# Create a Scrollbar for the chat display
-scrollbar = tk.Scrollbar(chat_frame, command=chat_display.yview)
-scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-
-# Link the scrollbar to the Text widget
-chat_display.config(yscrollcommand=scrollbar.set)
-
-# Create an entry box to type new messages
-message_entry = tk.Entry(root, width=50)
-message_entry.pack(padx=10, pady=5)
-
-message_entry.bind("<Return>", send_message)
-# Create a button to send the message
-
-image = tk.PhotoImage(file="setting.png")  # Replace with your image file path
-button = tk.Button(root, image=image, command=lambda: settings())
-button.pack(side="bottom", anchor="w")
-
-mute_image = tk.PhotoImage(file="mute.png")  # Replace with your image file path
-mute_button = tk.Button(root, image=mute_image, command=lambda:toggle_voice_chat())
-mute_button.pack(side="bottom", anchor="w")
-
-aplly_theme("dark")
-
 def switch_color():
     global current_theme
     if current_theme == "dark":
@@ -225,6 +178,73 @@ def switch_color():
 
     aplly_theme(current_theme)
     apply_settings_theme(current_theme)
+
+def create_main_window():
+    global root
+    global welcome
+    global name_entry
+    global chat_frame
+    global chat_display
+    global scrollbar
+    global message_entry
+    global image
+    global button
+    global mute_image
+    global mute_button
+    ips.first_window()
+
+    root = tk.Tk()
+    root.title("Raging totally not racist Chatroom")
+
+    # Welcome label
+    welcome = tk.Label(root, text="Welcome to the Raging totally not racist Chatroom", font=("Comic-Sans", 16))
+    welcome.pack()
+
+    # Name entry field for the user to type their name
+    name_entry = tk.Entry(root, width=25)
+    name_entry.insert(0, "username")
+    name_entry.pack()
+
+    # Create a frame for the chat display area and the scrollbar
+    chat_frame = tk.Frame(root)
+    chat_frame.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
+
+    # Create a Text widget to display the chat messages
+    chat_display = tk.Text(chat_frame, wrap=tk.WORD, height=15, width=50, state=tk.DISABLED)
+    chat_display.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+    # Create a Scrollbar for the chat display
+    scrollbar = tk.Scrollbar(chat_frame, command=chat_display.yview)
+    scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+    # Link the scrollbar to the Text widget
+    chat_display.config(yscrollcommand=scrollbar.set)
+
+    # Create an entry box to type new messages
+    message_entry = tk.Entry(root, width=50)
+    message_entry.pack(padx=10, pady=5)
+
+    message_entry.bind("<Return>", send_message)
+    # Create a button to send the message
+
+    image = tk.PhotoImage(file="setting.png")  # Replace with your image file path
+    button = tk.Button(root, image=image, command=lambda: settings())
+    button.pack(side="bottom", anchor="w")
+
+    mute_image = tk.PhotoImage(file="mute.png")  # Replace with your image file path
+    mute_button = tk.Button(root, image=mute_image, command=lambda:toggle_voice_chat())
+    mute_button.pack(side="bottom", anchor="w")
+
+    aplly_theme("dark")
+
+
+
+############################################
+#              Main program                #
+############################################
+# Create the main window
+create_main_window()
+aplly_theme("dark")
 
 # Start the client connection and get the socket
 client_socket = start_client()
