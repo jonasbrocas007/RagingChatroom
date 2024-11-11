@@ -7,6 +7,7 @@ import pyaudio
 import time
 
 voice_chat_active = None
+message_entry_lines = 1
 #online_count = 0
 
 current_theme = "dark"
@@ -118,7 +119,7 @@ def receive_messages(client_socket):
 # Function to display messages in the chat display Text widget
 def display_message(msg):
     chat_display.config(state=tk.NORMAL)
-    chat_display.insert(tk.END, f"{msg}\n")
+    chat_display.insert(tk.END, f"{msg}")
     chat_display.yview(tk.END)
     chat_display.config(state=tk.DISABLED)
 
@@ -162,7 +163,7 @@ def send_message(event=None):
     
     # Get the username and message input from the user
     username = name_entry.get()
-    message = message_entry.get()
+    message = message_entry.get("1.0", tk.END).strip()
 
     # Get the client's IP address (local machine's IP)
     client_ip = socket.gethostbyname(socket.gethostname())
@@ -173,8 +174,8 @@ def send_message(event=None):
         client_socket.send(full_message.encode('utf-8'))
 
         # Display the sent message in the chat window
-        display_message(f"{username}: {message}")
-        message_entry.delete(0, tk.END)
+        display_message(f"{username}: {message}\n")
+        message_entry.delete("1.0", tk.END)
 
 def settings():
     # Create a new top-level window for settings
@@ -224,6 +225,21 @@ def switch_color():
     aplly_theme(current_theme)
     apply_settings_theme(current_theme)
 
+def add_message_entry_line(event=None):
+    global message_entry_lines
+    global message_entry
+    message_entry_lines += 1
+    message_entry.configure(height=message_entry_lines)
+    message_entry.pack(padx=10, pady=5)
+
+def remove_message_entry_line(event=None):
+    global message_entry_lines
+    global message_entry
+    if message_entry_lines > 1:
+        message_entry_lines -= 1
+        message_entry.configure(height=message_entry_lines)
+        message_entry.pack(padx=10, pady=5)
+
 def create_main_window():
     global root
     global welcome
@@ -270,10 +286,13 @@ def create_main_window():
     chat_display.config(yscrollcommand=scrollbar.set)
 
     # Create an entry box to type new messages
-    message_entry = tk.Entry(root, width=50)
+    message_entry = tk.Text(root, width=50, height=message_entry_lines)
     message_entry.pack(padx=10, pady=5)
-
     message_entry.bind("<Return>", send_message)
+    message_entry.bind("<Shift-Up>", add_message_entry_line)
+    message_entry.bind("<Shift-Down>", remove_message_entry_line)
+
+
     # Create a button to send the message
 
     button_frame = tk.Frame(root)
