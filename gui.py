@@ -7,6 +7,7 @@ import pyaudio
 import time
 
 voice_chat_active = None
+#online_count = 0
 
 current_theme = "dark"
 message_entry = 0
@@ -21,6 +22,7 @@ BUFFER_SIZE = 1024   # Buffer size for sending/receiving
 # Global variable for the client socket
 client_socket = None
 audio_socket = None
+info_socket = None
 audio = pyaudio.PyAudio()
 with open("themes.json", "r") as style_file:
     styles = json.load(style_file)
@@ -30,42 +32,76 @@ def toggle_voice_chat():
     global voice_chat_active
     voice_chat_active = not voice_chat_active
 
+def capture_info():
+    global online_count
+    while True:
+        try:
+            info_msg = info_socket.recv(1024).decode('utf-8')
+            if info_msg:
+                # Schedule updating the chat display with the new message
+                online_count = int(info_msg)
+                online_count_label.config(text=f"Online: {online_count}")
+        except:
+            print("Disconnected from server.")
+            break
+
 def capture_audio():
-    #audio = pyaudio.PyAudio()
-    stream = audio.open(format=FORMAT, rate=SAMPLE_RATE, channels=CHANNELS, frames_per_buffer=BUFFER_SIZE, input=True)
-    
-    while True:  # Run indefinitely to capture and send audio
-        if voice_chat_active == True:
-            audio_socket.settimeout(1.0)
-            try:
-                # Read audio data from the microphone
-                data = stream.read(BUFFER_SIZE)
-                # Send the audio data to the server
-                audio_socket.sendall(data)
-            except socket.timeout:
-                continue
-            except Exception as e:
-                print(f"Error occurred: {e}")
-                break
+    global voice_chat_active
+    stream = None  # Declare stream variable outside the loop
+
+    try:
+        while True:
+            # Initialize the stream only when voice chat is active
+            if voice_chat_active and not stream:
+                stream = audio.open(format=FORMAT, rate=SAMPLE_RATE, channels=CHANNELS,
+                                    frames_per_buffer=BUFFER_SIZE, input=True)
+
+            # Capture audio only if voice chat is active
+            if voice_chat_active:
+                try:
+                    data = stream.read(BUFFER_SIZE, exception_on_overflow=False)
+                    audio_socket.sendall(data)
+                except (socket.timeout, socket.error) as e:
+                    print(f"Error sending audio: {e}")
+                    break
+            else:
+                # Delay to reduce CPU usage when muted
+                time.sleep(0.1)
+
+    finally:
+        if stream:
+            stream.stop_stream()
+            stream.close()
 
 # Function to handle receiving audio data from the server
 def receive_audio():
-    output_stream = audio.open(format=FORMAT, rate=SAMPLE_RATE, channels=CHANNELS, frames_per_buffer=BUFFER_SIZE, output=True)
-    
-    while True:
-        if voice_chat_active == True:
-            audio_socket.settimeout(1.0)
-            try:
-            # Receive audio data from the server
-                audio_data = audio_socket.recv(1024)
-                if audio_data:
-                    output_stream.write(audio_data)  # Play the received audio
-                
-            except socket.timeout:
-                continue
-            except Exception as e:
-                print(f"Error receiving audio: {e}")
-                break
+    global voice_chat_active
+    output_stream = None  # Declare output_stream variable outside the loop
+
+    try:
+        while True:
+            # Initialize the output stream only when voice chat is active
+            if voice_chat_active and not output_stream:
+                output_stream = audio.open(format=FORMAT, rate=SAMPLE_RATE, channels=CHANNELS,
+                                           frames_per_buffer=BUFFER_SIZE, output=True)
+
+            # Receive and play audio only if voice chat is active
+            if voice_chat_active:
+                try:
+                    audio_data = audio_socket.recv(BUFFER_SIZE)
+                    if audio_data:
+                        output_stream.write(audio_data)
+                except (socket.timeout, socket.error) as e:
+                    print(f"Error receiving audio: {e}")
+                    break
+            else:
+                # Delay to reduce CPU usage when muted
+                time.sleep(0.1)
+
+    finally:
+        if output_stream:
+            output_stream.stop_stream()
+            output_stream.close()
 
 # Function to handle receiving messages and updating the chat display
 def receive_messages(client_socket):
@@ -88,13 +124,16 @@ def display_message(msg):
 
 # Set up the client connection and start the receiving thread
 def start_client():
-    global client_socket, audio_socket
+    global client_socket, audio_socket, info_socket
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_ip = ips.confirmed_server_ip  # Replace with actual server IP
     client_socket.connect((server_ip, 9999))
 
     audio_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     audio_socket.connect((server_ip, 10000))
+
+    info_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    info_socket.connect((server_ip, 10001))
 
     # Start a thread to receive messages from the server
     receive_thread = threading.Thread(target=receive_messages, args=(client_socket,))
@@ -110,6 +149,10 @@ def start_client():
     capture_audio_thread = threading.Thread(target=capture_audio)
     capture_audio_thread.daemon = True
     capture_audio_thread.start()
+
+    receive_info_thread = threading.Thread(target=capture_info)
+    receive_info_thread.daemon = True
+    receive_info_thread.start()
 
     return client_socket
 
@@ -159,6 +202,8 @@ def aplly_theme(theme_name):
     message_entry.configure(**theme_styles["message_entry"])
     button.configure(**theme_styles["button"])
     mute_button.configure(**theme_styles["button"])
+    online_count_label.configure(**theme_styles["welcome"])
+    button_frame.configure(**theme_styles["root"])
 
     # Apply styles to settings window widgets
 
@@ -191,10 +236,14 @@ def create_main_window():
     global button
     global mute_image
     global mute_button
+    global online_count_label
+    global button_frame
+
     ips.first_window()
 
     root = tk.Tk()
     root.title("Raging totally not racist Chatroom")
+    last_row = root.grid_size()[1]
 
     # Welcome label
     welcome = tk.Label(root, text="Welcome to the Raging totally not racist Chatroom", font=("Comic-Sans", 16))
@@ -227,15 +276,25 @@ def create_main_window():
     message_entry.bind("<Return>", send_message)
     # Create a button to send the message
 
-    image = tk.PhotoImage(file="setting.png")  # Replace with your image file path
-    button = tk.Button(root, image=image, command=lambda: settings())
-    button.pack(side="bottom", anchor="w")
+    button_frame = tk.Frame(root)
+    button_frame.pack(side="bottom", anchor="w")  # Align frame at the bottom-left
 
-    mute_image = tk.PhotoImage(file="mute.png")  # Replace with your image file path
-    mute_button = tk.Button(root, image=mute_image, command=lambda:toggle_voice_chat())
-    mute_button.pack(side="bottom", anchor="w")
+    # Load images for the buttons
+    image = tk.PhotoImage(file="setting.png")  # Replace with your actual image file path
+    mute_image = tk.PhotoImage(file="mute.png")  # Replace with your actual image file path
 
-    aplly_theme("dark")
+    # Create and pack the settings button in the frame
+    button = tk.Button(button_frame, image=image, command=lambda: settings())
+    button.pack(side="left")  
+
+    # Create and pack the mute button in the frame
+    mute_button = tk.Button(button_frame, image=mute_image, command=lambda: toggle_voice_chat())
+    mute_button.pack(side="left") 
+
+    online_count_label = tk.Label(button_frame, text=f"online: 0", font=("Comic-Sans", 10))
+    online_count_label.pack(side="right")
+
+
 
 
 
