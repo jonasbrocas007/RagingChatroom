@@ -11,7 +11,7 @@ def audio_broadcast(audio_data, sender_audio_socket):
     for audio_client in audio_clients:
         if audio_client != sender_audio_socket:
             try:
-                print(f"Broadcasting audio data to {audio_client}")
+                #print(f"Broadcasting audio data to {audio_client}")
                 audio_client.send(audio_data)
             except Exception as e:
                 print(f"Error sending audio data to {audio_client}: {e}")
@@ -40,15 +40,15 @@ def handle_client(client_socket, client_address, audio_socket):
                 if socket == audio_socket:
                     audio_data = socket.recv(1024)
                     if audio_data:
-                        print(f"Received audio data from {client_address}")
+                        #print(f"Received audio data from {client_address}")
                         audio_broadcast(audio_data, audio_socket)
                     else:
-                        print(f"Audio socket closed from {client_address}")
+                        #print(f"Audio socket closed from {client_address}")
                         break  # Client disconnected
                 elif socket == client_socket:
                     msg = socket.recv(1024).decode('utf-8')
                     if msg.lower() == 'quit':  # Check if client wants to quit
-                        print(f"Client {client_address} requested to quit")
+                        #print(f"Client {client_address} requested to quit")
                         break
 
                     # Parse the message to extract the username, IP, and message
@@ -93,7 +93,7 @@ def start_server():
         # Accept new audio and chat client connections
         audio_socket, addr = audio_server.accept()
         client_socket, addr = server.accept()  # Accept new client
-        print(f"New connection from {addr}")
+        #print(f"New connection from {addr}")
 
         # Add the new client to the clients list
         clients.append(client_socket)
