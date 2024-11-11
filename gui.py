@@ -6,7 +6,7 @@ import json
 import pyaudio
 import time
 
-voice_chat_active = False
+voice_chat_active = None
 
 current_theme = "dark"
 message_entry = 0
@@ -158,6 +158,7 @@ def aplly_theme(theme_name):
     chat_display.configure(**theme_styles["chat_display"])
     message_entry.configure(**theme_styles["message_entry"])
     button.configure(**theme_styles["button"])
+    mute_button.configure(**theme_styles["button"])
 
     # Apply styles to settings window widgets
 
