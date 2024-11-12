@@ -318,9 +318,6 @@ def create_main_window():
     online_count_label.pack(side="right")
 
 
-
-
-
 ############################################
 #              Main program                #
 ############################################

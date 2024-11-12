@@ -2,7 +2,7 @@
     "themes": {
         "dark":{
             "root": {"background": "#1e1e1e"},
-            "button": {"background": "#1e1e1e"},
+            "button": {"background": "#1e1e1e", "foreground": "white"},
             "welcome": {"background": "#1e1e1e", "foreground": "white"},
             "name_entry": {"background": "#3e3e42", "foreground": "white"},
             "chat_display": {"background": "#252526", "foreground": "white"},
