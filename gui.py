@@ -5,6 +5,8 @@ import ips
 import json
 import pyaudio
 import time
+from tkinter import messagebox
+import os
 
 voice_chat_active = None
 message_entry_lines = 1
@@ -186,7 +188,7 @@ def settings():
     settings_window.geometry("300x200")
 
     # Add some widgets to the settings window
-    dark_mode = tk.Button(settings_window, text="Switch mode dark/light", command=lambda: switch_color())
+    dark_mode = tk.Button(settings_window, text="Switch mode", command=lambda: switch_color())
     dark_mode.pack()
     apply_settings_theme(current_theme)
 
@@ -259,7 +261,9 @@ def create_main_window():
 
     root = tk.Tk()
     root.title("Raging totally not racist Chatroom")
-    last_row = root.grid_size()[1]
+
+    icon = tk.PhotoImage(file="system_images\icon-png.png")
+    root.iconphoto(False, icon)
 
     # Welcome label
     welcome = tk.Label(root, text="Welcome to the Raging totally not racist Chatroom", font=("Comic-Sans", 16))
@@ -299,8 +303,8 @@ def create_main_window():
     button_frame.pack(side="bottom", anchor="w")  # Align frame at the bottom-left
 
     # Load images for the buttons
-    image = tk.PhotoImage(file="setting.png")  # Replace with your actual image file path
-    mute_image = tk.PhotoImage(file="mute.png")  # Replace with your actual image file path
+    image = tk.PhotoImage(file="system_images\setting.png")  # Replace with your actual image file path
+    mute_image = tk.PhotoImage(file="system_images\mute.png")  # Replace with your actual image file path
 
     # Create and pack the settings button in the frame
     button = tk.Button(button_frame, image=image, command=lambda: settings())
